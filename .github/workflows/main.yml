@@ -3,7 +3,7 @@ on: [push, workflow_dispatch]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04 # Используем стабильную версию Ubuntu
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -17,13 +17,18 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential git python3-dev ffmpeg libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev libgstreamer1.0-dev gstreamer1.0-plugins-base gstreamer1.0-plugins-good libffi-dev libssl-dev libtool autoconf automake pkg-config
+          # Устанавливаем Buildozer и Cython
           pip install --user --upgrade buildozer Cython==0.29.33 git+https://github.com/kivy/python-for-android.git
 
       - name: Build with Buildozer
         run: |
-          # Добавляем путь к buildozer в PATH
           export PATH=$PATH:$HOME/.local/bin
-          # Запускаем сборку
+          
+          # Автоматическое принятие всех лицензий Android SDK
+          mkdir -p ~/.buildozer/android/platform/android-sdk/licenses
+          yes | buildozer android sdk_patch || true
+          
+          # Запуск сборки
           buildozer -v android debug
         env:
           ACCEPT_SDK_LICENSE: "yes"
@@ -31,5 +36,5 @@ jobs:
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: my-app-apk
+          name: my-game-apk
           path: bin/*.apk
