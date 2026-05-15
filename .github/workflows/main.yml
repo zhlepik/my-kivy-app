@@ -1,9 +1,9 @@
 name: Build Android APK
-on: [push, workflow_dispatch] # Собирает при каждом пуше или вручную
+on: [push, workflow_dispatch]
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -13,19 +13,23 @@ jobs:
         with:
           python_version: '3.11'
 
-      - name: Install dependencies
+      - name: Install system dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential git python3-dev ffmpeg libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev libgstreamer1.0-dev gstreamer1.0-plugins-base gstreamer1.0-plugins-good libffi-dev libssl-dev libtool autoconf automake pkg-config
+          pip install --user --upgrade buildozer Cython==0.29.33 git+https://github.com/kivy/python-for-android.git
 
       - name: Build with Buildozer
-        uses: ArtemSerebrennikov/buildozer-action@v1
-        with:
-          buildozer_version: master
-          python_version: 3.11
+        run: |
+          # Добавляем путь к buildozer в PATH
+          export PATH=$PATH:$HOME/.local/bin
+          # Запускаем сборку
+          buildozer -v android debug
+        env:
+          ACCEPT_SDK_LICENSE: "yes"
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: package
+          name: my-app-apk
           path: bin/*.apk
