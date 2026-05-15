@@ -3,7 +3,7 @@ on: [push, workflow_dispatch]
 
 jobs:
   build:
-    runs-on: ubuntu-22.04 # Используем стабильную версию Ubuntu
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -16,15 +16,18 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
+          # Добавляем libunwind-dev вручную и используем -f для исправления зависимостей
+          sudo apt-get install -y -f libunwind-dev
           sudo apt-get install -y build-essential git python3-dev ffmpeg libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev libgstreamer1.0-dev gstreamer1.0-plugins-base gstreamer1.0-plugins-good libffi-dev libssl-dev libtool autoconf automake pkg-config
-          # Устанавливаем Buildozer и Cython
+          
+          # Устанавливаем инструменты сборки
           pip install --user --upgrade buildozer Cython==0.29.33 git+https://github.com/kivy/python-for-android.git
 
       - name: Build with Buildozer
         run: |
           export PATH=$PATH:$HOME/.local/bin
           
-          # Автоматическое принятие всех лицензий Android SDK
+          # Автоматическое принятие всех лицензий
           mkdir -p ~/.buildozer/android/platform/android-sdk/licenses
           yes | buildozer android sdk_patch || true
           
