@@ -13,31 +13,32 @@ jobs:
         with:
           python_version: '3.11'
 
-      - name: Install system dependencies
+      - name: Install System Dependencies
         run: |
           sudo apt-get update
-          # Добавляем libunwind-dev вручную и используем -f для исправления зависимостей
           sudo apt-get install -y -f libunwind-dev
           sudo apt-get install -y build-essential git python3-dev ffmpeg libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev libgstreamer1.0-dev gstreamer1.0-plugins-base gstreamer1.0-plugins-good libffi-dev libssl-dev libtool autoconf automake pkg-config
-          
-          # Устанавливаем инструменты сборки
-          pip install --user --upgrade buildozer Cython==0.29.33 git+https://github.com/kivy/python-for-android.git
+          pip install --user --upgrade buildozer Cython==0.29.33 sh
+
+      - name: Install Android SDK Command Line Tools
+        run: |
+          mkdir -p ~/.buildozer/android/platform/android-sdk/cmdline-tools
+          wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
+          unzip -q commandlinetools-linux-9477386_latest.zip -d ~/.buildozer/android/platform/android-sdk/cmdline-tools
+          mv ~/.buildozer/android/platform/android-sdk/cmdline-tools/cmdline-tools ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest
 
       - name: Build with Buildozer
         run: |
           export PATH=$PATH:$HOME/.local/bin
-          
-          # Автоматическое принятие всех лицензий
-          mkdir -p ~/.buildozer/android/platform/android-sdk/licenses
-          yes | buildozer android sdk_patch || true
-          
+          # Принимаем все лицензии принудительно
+          yes | ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=/home/runner/.buildozer/android/platform/android-sdk --licenses || true
           # Запуск сборки
           buildozer -v android debug
         env:
           ACCEPT_SDK_LICENSE: "yes"
 
-      - name: Upload APK artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: my-game-apk
+          name: timepix-apk
           path: bin/*.apk
